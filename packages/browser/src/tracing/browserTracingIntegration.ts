@@ -364,10 +364,11 @@ export const browserTracingIntegration = ((_options: Partial<BrowserTracingOptio
 
       if (WINDOW.location) {
         if (instrumentPageLoad) {
+          const origin = browserPerformanceTimeOrigin();
           startBrowserTracingPageLoadSpan(client, {
             name: WINDOW.location.pathname,
             // pageload should always start at timeOrigin (and needs to be in s, not ms)
-            startTime: browserPerformanceTimeOrigin ? browserPerformanceTimeOrigin / 1000 : undefined,
+            startTime: origin ? origin / 1000 : undefined,
             attributes: {
               [SEMANTIC_ATTRIBUTE_SENTRY_SOURCE]: 'url',
               [SEMANTIC_ATTRIBUTE_SENTRY_ORIGIN]: 'auto.pageload.browser',
@@ -452,8 +453,8 @@ export function startBrowserTracingPageLoadSpan(
  * This will only do something if a browser tracing integration has been setup.
  */
 export function startBrowserTracingNavigationSpan(client: Client, spanOptions: StartSpanOptions): Span | undefined {
-  getIsolationScope().setPropagationContext({ traceId: generateTraceId() });
-  getCurrentScope().setPropagationContext({ traceId: generateTraceId() });
+  getIsolationScope().setPropagationContext({ traceId: generateTraceId(), sampleRand: Math.random() });
+  getCurrentScope().setPropagationContext({ traceId: generateTraceId(), sampleRand: Math.random() });
 
   client.emit('startNavigationSpan', spanOptions);
 

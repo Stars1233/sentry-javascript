@@ -43,9 +43,9 @@ If you need to support older browsers, we recommend transpiling your code using 
 Support for the following Framework versions is dropped:
 
 - **Remix**: Version `1.x`
-- **TanStack Router**: Version `1.63.0` and lower
+- **TanStack Router**: Version `1.63.0` and lower (relevant when using `tanstackRouterBrowserTracingIntegration`)
 - **SvelteKit**: SvelteKit version `1.x`
-- **Ember.js**: Ember.js version `3.x` and lower
+- **Ember.js**: Ember.js version `3.x` and lower (minimum supported version is `4.x`)
 
 ### TypeScript Version Policy
 
@@ -126,6 +126,12 @@ Older Typescript versions _may_ still work, but we will not test them anymore an
 
   To customize which files are deleted after upload, define the `filesToDeleteAfterUpload` array with globs.
 
+### `@sentry/react`
+
+The `componentStack` field in the `ErrorBoundary` component is now typed as `string` instead of `string | null | undefined` for the `onError` and `onReset` lifecycle methods. This more closely matches the actual behavior of React, which always returns a `string` whenever a component stack is available.
+
+In the `onUnmount` lifecycle method, the `componentStack` field is now typed as `string | null`. The `componentStack` is `null` when no error has been thrown at time of unmount.
+
 ### Uncategorized (TODO)
 
 TODO
@@ -187,12 +193,14 @@ Sentry.init({
 - The `addRequestDataToEvent` method has been removed. Use `httpRequestToRequestData` instead and put the resulting object directly on `event.request`.
 - The `extractPathForTransaction` method has been removed. There is no replacement.
 - The `addNormalizedRequestDataToEvent` method has been removed. Use `httpRequestToRequestData` instead and put the resulting object directly on `event.request`.
+- A `sampleRand` field on `PropagationContext` is now required. This is relevant if you used `scope.setPropagationContext(...)`
 
 #### Other/Internal Changes
 
 The following changes are unlikely to affect users of the SDK. They are listed here only for completion sake, and to alert users that may be relying on internal behavior.
 
 - `client._prepareEvent()` now requires a currentScope & isolationScope to be passed as last arugments
+- `client.recordDroppedEvent()` no longer accepts an `event` as third argument. The event was no longer used for some time, instead you can (optionally) pass a count of dropped events as third argument.
 
 ### `@sentry/nestjs`
 
@@ -240,6 +248,12 @@ The following changes are unlikely to affect users of the SDK. They are listed h
 - The option `logErrors` in the `vueIntegration` has been removed. The Sentry Vue error handler will propagate the error to a user-defined error handler
   or just re-throw the error (which will log the error without modifying).
 
+### `@sentry/opentelemetry`
+
+- Removed `getPropagationContextFromSpan`.
+  This function was primarily internally used.
+  It's functionality was misleading and should not be used.
+
 ## 5. Build Changes
 
 Previously the CJS versions of the SDK code (wrongfully) contained compatibility statements for default exports in ESM:
@@ -253,15 +267,17 @@ Let us know if this is causing issues in your setup by opening an issue on GitHu
 
 ### `@sentry/deno`
 
-- The import of Sentry from the deno registry has changed. Use the `import * as Sentry from 'https://deno.land/x/sentry/build/index.mjs'` import instead.
+- `@sentry/deno` is no longer published on `deno.land` so you'll need to import
+  from npm:
 
-  ```js
-  // before
-  import * as Sentry from 'https://deno.land/x/sentry/index.mjs';
+```javascript
+import * as Sentry from 'npm:@sentry/deno';
 
-  // after
-  import * as Sentry from 'https://deno.land/x/sentry/build/index.mjs';
-  ```
+Sentry.init({
+  dsn: '__DSN__',
+  // ...
+});
+```
 
 ## 6. Type Changes
 
